@@ -107,15 +107,21 @@ async function initializeDatabase() {
 
     console.log('Database tables verified/created successfully.');
 
-    // Seed Admin User if not exists
+    // Seed or Update Admin User
     const admin = await dbGet("SELECT * FROM users WHERE role = 'admin'");
+    const hashedPass = await bcrypt.hash('orbis03', 10);
     if (!admin) {
-      const hashedPass = await bcrypt.hash('admin123', 10);
       await dbRun(
         "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-        ['Admin', 'admin@velaanfarm.in', hashedPass, 'admin']
+        ['orbis', 'orbis', hashedPass, 'admin']
       );
-      console.log('Seeded default admin user: admin@velaanfarm.in / admin123');
+      console.log('Seeded admin user: orbis / orbis03');
+    } else {
+      await dbRun(
+        "UPDATE users SET name = ?, email = ?, password = ? WHERE role = 'admin'",
+        ['orbis', 'orbis', hashedPass]
+      );
+      console.log('Updated existing admin user credentials to: orbis / orbis03');
     }
 
     // Seed Products if table is empty
@@ -206,7 +212,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    const user = await dbGet("SELECT * FROM users WHERE email = ?", [email]);
+    const user = await dbGet("SELECT * FROM users WHERE email = ? OR name = ?", [email, email]);
     if (!user) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
