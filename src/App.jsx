@@ -65,6 +65,22 @@ const Home = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
   const [submitState, setSubmitState] = useState({ loading: false, success: false, error: false });
+  const [activeCard, setActiveCard] = useState(null);
+
+  const handleLogoMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    if (x < width / 2) {
+      setActiveCard('c1');
+    } else {
+      setActiveCard('c2');
+    }
+  };
+
+  const handleLogoMouseLeave = () => {
+    setActiveCard(null);
+  };
 
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -77,7 +93,7 @@ const Home = () => {
       return;
     }
     setSubmitState({ loading: true, success: false, error: false });
-    
+
     // Simulate API submission
     setTimeout(() => {
       setSubmitState({ loading: false, success: true, error: false });
@@ -101,12 +117,12 @@ const Home = () => {
             <p className="hero-desc">
               Since 1977 - பாரம்பரியம் மாறா தரம். நேரடி பண்ணை பசுவின் பால் மற்றும் பாரம்பரிய முறையில் காய்ச்சிய மணமிக்க நெய். கொமரபாளையத்தில் பால் விநியோகம், தமிழகம் முழுவதும் கொரியர் வசதி.
             </p>
-            <div className="hero-actions">
+            <div className="hero-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <button onClick={() => navigate('/products')} className="btn btn-primary">
                 <i className="fas fa-shopping-basket"></i> ஆர்டர் செய்க
               </button>
-              <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-pulse">
-                <i className="fab fa-whatsapp"></i> வாட்ஸ்அப் ஆர்டர்
+              <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="whatsapp-logo-btn btn-pulse" title="வாட்ஸ்அப் மூலம் ஆர்டர் செய்ய">
+                <i className="fab fa-whatsapp"></i>
               </a>
             </div>
             <div className="hero-stats">
@@ -124,19 +140,19 @@ const Home = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="hero-image-container">
-            <div className="hero-image-wrapper">
+            <div className="hero-image-wrapper" onMouseMove={handleLogoMouseMove} onMouseLeave={handleLogoMouseLeave} style={{ cursor: 'pointer' }}>
               <img src="/image2.jpeg" alt="Velaan Farm Logo" className="hero-logo-img" />
             </div>
-            <div className="floating-card c1">
+            <div className={`floating-card c1 ${activeCard === 'c1' ? 'active' : ''}`}>
               <span className="card-icon">🥛</span>
               <div>
                 <h4>பசுவின் பால்</h4>
                 <p>தினமும் புதியது</p>
               </div>
             </div>
-            <div className="floating-card c2">
+            <div className={`floating-card c2 ${activeCard === 'c2' ? 'active' : ''}`}>
               <span className="card-icon">🧈</span>
               <div>
                 <h4>மணமணக்கும் நெய்</h4>
@@ -151,9 +167,11 @@ const Home = () => {
       <section className="about" id="about">
         <div className="about-container">
           <div className="about-image">
-            <div className="founder-frame">
-              <img src="/image1.jpeg" alt="Founder Arumugam" className="founder-img" />
-              <div className="founder-badge">
+            <div className="founder-card">
+              <div className="founder-frame">
+                <img src="/image1.jpeg" alt="Founder Arumugam" className="founder-img" />
+              </div>
+              <div className="founder-info">
                 <h4>ஆறுமுகம் பால்காரர்</h4>
                 <p>நிறுவனர், Since 1977</p>
               </div>
@@ -230,12 +248,12 @@ const Home = () => {
         <div className="cta-content">
           <h2>சுவையான மற்றும் ஆரோக்கியமான நெய் வேண்டுமா?</h2>
           <p>இப்போதே ஆர்டர் செய்து உங்கள் இல்லத்திலேயே பெற்றுக்கொள்ளுங்கள். தமிழகம் முழுவதும் கொரியர் அனுப்பப்படும்.</p>
-          <div className="cta-buttons">
+          <div className="cta-buttons" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
             <button onClick={() => navigate('/products')} className="btn btn-primary btn-pulse">
               <i className="fas fa-shopping-cart"></i> நெய் ஆர்டர் செய்ய
             </button>
-            <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-              <i className="fab fa-whatsapp"></i> வாட்ஸ்அப்பில் கேட்க
+            <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="whatsapp-logo-btn" title="வாட்ஸ்அப்பில் கேட்க">
+              <i className="fab fa-whatsapp"></i>
             </a>
           </div>
         </div>
@@ -277,7 +295,7 @@ const Home = () => {
               </a>
             </div>
           </div>
-          
+
           <div className="contact-form-panel">
             <h3>விசாரணை படிவம்</h3>
             <form onSubmit={handleContactSubmit}>
@@ -313,11 +331,11 @@ const Home = () => {
 const About = () => {
   return (
     <section style={{ paddingTop: '140px', minHeight: '80vh' }}>
-      <div className="about-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div className="about-container" style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
         <div className="about-content" style={{ gridColumn: 'span 2' }}>
           <span className="section-subtitle" style={{ textAlign: 'center', display: 'block' }}>வேளாண் பண்ணை</span>
           <h2 style={{ textAlign: 'center', fontSize: '2.8rem', marginBottom: '30px' }}>நமது பாரம்பரிய கதை</h2>
-          
+
           <div className="benefit-card" style={{ marginBottom: '40px', lineHeight: 1.8 }}>
             <p style={{ fontSize: '1.1rem', marginBottom: '20px' }}>
               <strong>வேளாண் பண்ணை</strong> 1977-ல் திரு. ஆறுமுகம் பால்காரர் அவர்களால் கொமரபாளையத்தில் ஒரு சிறு பால் பண்ணையாக துவங்கப்பட்டது. கடந்த 45 ஆண்டுகளுக்கும் மேலாக தரமான, இயற்கையான பசுவின் பாலை கொமரபாளைய மக்களுக்கு வழங்கி வருகிறோம்.
@@ -361,8 +379,8 @@ const Products = () => {
 
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            p.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === 'all' || p.category === category;
       return matchesSearch && matchesCategory;
     });
@@ -370,44 +388,44 @@ const Products = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', marginBottom: '40px' }}>
           <div>
             <span className="section-subtitle">தயாரிப்புகள்</span>
             <h2 style={{ fontSize: '2.5rem', color: 'var(--primary-dark)' }}>எங்கள் தயாரிப்புகள்</h2>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Search Input */}
             <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="தேடுக (Search)..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
+              <input
+                type="text"
+                placeholder="தேடுக (Search)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ padding: '12px 20px', borderRadius: '50px', border: '1px solid rgba(30, 94, 58, 0.2)', width: '220px', outline: 'none' }}
               />
             </div>
-            
+
             {/* Filter Buttons */}
             <div style={{ display: 'flex', gap: '8px', background: '#eaf1eb', padding: '6px', borderRadius: '50px' }}>
-              <button 
-                onClick={() => setCategory('all')} 
-                className={`btn btn-secondary`} 
+              <button
+                onClick={() => setCategory('all')}
+                className={`btn btn-secondary`}
                 style={{ padding: '8px 16px', fontSize: '0.9rem', border: 'none', background: category === 'all' ? 'var(--primary-color)' : 'transparent', color: category === 'all' ? 'white' : 'var(--primary-color)' }}
               >
                 அனைத்தும்
               </button>
-              <button 
-                onClick={() => setCategory('milk')} 
-                className={`btn btn-secondary`} 
+              <button
+                onClick={() => setCategory('milk')}
+                className={`btn btn-secondary`}
                 style={{ padding: '8px 16px', fontSize: '0.9rem', border: 'none', background: category === 'milk' ? 'var(--primary-color)' : 'transparent', color: category === 'milk' ? 'white' : 'var(--primary-color)' }}
               >
                 பால்
               </button>
-              <button 
-                onClick={() => setCategory('ghee')} 
-                className={`btn btn-secondary`} 
+              <button
+                onClick={() => setCategory('ghee')}
+                className={`btn btn-secondary`}
                 style={{ padding: '8px 16px', fontSize: '0.9rem', border: 'none', background: category === 'ghee' ? 'var(--primary-color)' : 'transparent', color: category === 'ghee' ? 'white' : 'var(--primary-color)' }}
               >
                 நெய்
@@ -432,12 +450,12 @@ const Products = () => {
                 <p>{p.description}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
                   <span className="product-price">₹{p.price}</span>
-                  <button 
+                  <button
                     onClick={() => {
                       dispatch({ type: 'ADD', payload: p });
                       alert(`✅ ${p.name} (${p.variant}) கூடையில் சேர்க்கப்பட்டது!`);
-                    }} 
-                    className="btn btn-primary" 
+                    }}
+                    className="btn btn-primary"
                     style={{ padding: '10px 20px', fontSize: '0.9rem' }}
                   >
                     <i className="fas fa-cart-plus"></i> சேர்க்க
@@ -458,7 +476,7 @@ const CartPage = () => {
   const navigate = useNavigate();
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  
+
   // Courier charges: Free if subtotal > 500 or if only milk is in the cart, otherwise 50
   const hasGhee = cart.some(item => item.category === 'ghee');
   const shipping = (subtotal === 0 || subtotal >= 500 || !hasGhee) ? 0 : 50;
@@ -466,7 +484,7 @@ const CartPage = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
         <span className="section-subtitle">ஆர்டர் கூடை</span>
         <h2 style={{ fontSize: '2.5rem', color: 'var(--primary-dark)', marginBottom: '40px' }}>உங்கள் கூடை (Your Cart)</h2>
 
@@ -480,7 +498,7 @@ const CartPage = () => {
             </button>
           </div>
         ) : (
-          <div>
+          <div className="cart-page-container">
             <div className="cart-list">
               {cart.map(item => (
                 <div key={item.id} className="cart-item">
@@ -491,26 +509,26 @@ const CartPage = () => {
                       <p>{item.variant} · ₹{item.price}</p>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: '30px', flexWrap: 'wrap' }}>
                     <div className="cart-qty-control">
-                      <button 
-                        onClick={() => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty - 1 } })} 
+                      <button
+                        onClick={() => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty - 1 } })}
                         className="qty-btn"
                       >
                         -
                       </button>
                       <span style={{ fontWeight: '600', minWidth: '20px', textAlign: 'center' }}>{item.qty}</span>
-                      <button 
-                        onClick={() => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty + 1 } })} 
+                      <button
+                        onClick={() => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty + 1 } })}
                         className="qty-btn"
                       >
                         +
                       </button>
                     </div>
                     <span className="cart-item-price">₹{item.price * item.qty}</span>
-                    <button 
-                      onClick={() => dispatch({ type: 'REMOVE', payload: item.id })} 
+                    <button
+                      onClick={() => dispatch({ type: 'REMOVE', payload: item.id })}
                       className="remove-btn"
                       title="நீக்குக"
                     >
@@ -540,7 +558,7 @@ const CartPage = () => {
                 <span>மொத்த தொகை (Total)</span>
                 <span>₹{total}</span>
               </div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '15px', marginTop: '20px', flexWrap: 'wrap' }}>
                 <button onClick={() => dispatch({ type: 'CLEAR' })} className="btn btn-secondary" style={{ padding: '12px 24px' }}>
                   கூடையை காலி செய்
@@ -578,7 +596,7 @@ const Order = () => {
     pincode: '',
     notes: ''
   });
-  
+
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -632,9 +650,9 @@ const Order = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px' }}>
-          
+
           <div className="form-card" style={{ maxWidth: 'none', margin: 0 }}>
             <h3 className="form-title" style={{ textAlign: 'left' }}>விநியோக முகவரி (Delivery Address)</h3>
             <form onSubmit={handleSubmit}>
@@ -736,10 +754,10 @@ const Order = () => {
 const DeliveryInfo = () => {
   return (
     <section style={{ paddingTop: '140px', minHeight: '80vh' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }} className="benefit-card">
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }} className="benefit-card">
         <span className="section-subtitle">சேவை விவரங்கள்</span>
         <h2 style={{ fontSize: '2.5rem', color: 'var(--primary-dark)', marginBottom: '25px' }}>விநியோகத் தகவல் (Delivery Details)</h2>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', lineHeight: 1.7 }}>
           <div>
             <h4 style={{ color: 'var(--primary-color)', fontSize: '1.2rem', marginBottom: '8px' }}><i className="fas fa-city"></i> கொமரபாளையம் நகர பால் விநியோகம்</h4>
@@ -781,7 +799,7 @@ const Contact = () => {
       return;
     }
     setSubmitState({ loading: true, success: false });
-    
+
     setTimeout(() => {
       setSubmitState({ loading: false, success: true });
       setForm({ name: '', phone: '', message: '' });
@@ -796,7 +814,7 @@ const Contact = () => {
           <span className="section-subtitle">தொடர்புக்கு</span>
           <h2>எங்களை எப்படி தொடர்பு கொள்ளலாம்?</h2>
           <p>உங்களது ஆர்டர்கள் மற்றும் சந்தேகங்களுக்கு உடனுக்குடன் பதிலளிக்க நாங்கள் தயாராக உள்ளோம்.</p>
-          
+
           <div className="contact-details">
             <div className="contact-item">
               <div className="c-icon"><i className="fas fa-phone"></i></div>
@@ -820,7 +838,7 @@ const Contact = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="social-links">
             <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="social-icon wa">
               <i className="fab fa-whatsapp"></i>
@@ -896,7 +914,7 @@ const Admin = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
         <span className="section-subtitle">நிர்வாகம்</span>
         <h2 style={{ fontSize: '2.5rem', color: 'var(--primary-dark)', marginBottom: '30px' }}>ஆர்டர் கண்காணிப்பு (Admin Dashboard)</h2>
 
@@ -954,16 +972,16 @@ const Admin = () => {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button 
-                          onClick={() => toggleStatus(o.id)} 
-                          className="btn btn-secondary" 
+                        <button
+                          onClick={() => toggleStatus(o.id)}
+                          className="btn btn-secondary"
                           style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '4px' }}
                         >
                           மாற்று (Toggle)
                         </button>
-                        <button 
-                          onClick={() => deleteOrder(o.id)} 
-                          className="remove-btn" 
+                        <button
+                          onClick={() => deleteOrder(o.id)}
+                          className="remove-btn"
                           style={{ padding: '4px' }}
                         >
                           <i className="fas fa-trash-alt"></i>
@@ -985,6 +1003,8 @@ const Admin = () => {
 const Login = () => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [showSplash, setShowSplash] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -992,9 +1012,22 @@ const Login = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     if (email && pass) {
-      dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      setShowSplash(true);
+
+      let currentProgress = 0;
+      const interval = setInterval(() => {
+        currentProgress += 20;
+        setProgress(currentProgress);
+        if (currentProgress >= 100) {
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      setTimeout(() => {
+        dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      }, 5000);
     } else {
       alert('மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.');
     }
@@ -1002,6 +1035,17 @@ const Login = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '80vh' }}>
+      {showSplash && (
+        <div className="water-loader-container">
+          <div className="water-logo-wrapper">
+            <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-logo-img" />
+            <div className="water-fill" style={{ height: `${progress}%` }}>
+              <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-fill-logo-img" />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="form-card">
         <h2 className="form-title">உள்நுழைக (Login)</h2>
         <form onSubmit={handleLogin}>
@@ -1028,14 +1072,29 @@ const Login = () => {
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
+  const [showSplash, setShowSplash] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSignup = (e) => {
     e.preventDefault();
     if (email && pass) {
-      dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
-      navigate('/');
+      setShowSplash(true);
+
+      let currentProgress = 0;
+      const interval = setInterval(() => {
+        currentProgress += 20;
+        setProgress(currentProgress);
+        if (currentProgress >= 100) {
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      setTimeout(() => {
+        dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
+        navigate('/');
+      }, 5000);
     } else {
       alert('விவரங்களை முழுமையாக உள்ளிடவும்.');
     }
@@ -1043,6 +1102,17 @@ const Signup = () => {
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '80vh' }}>
+      {showSplash && (
+        <div className="water-loader-container">
+          <div className="water-logo-wrapper">
+            <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-logo-img" />
+            <div className="water-fill" style={{ height: `${progress}%` }}>
+              <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-fill-logo-img" />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="form-card">
         <h2 className="form-title">பதிவு செய்க (Sign up)</h2>
         <form onSubmit={handleSignup}>
@@ -1065,6 +1135,7 @@ const Signup = () => {
     </section>
   );
 };
+
 
 // ---------- MAIN APP COMPONENT ----------
 const App = () => {
@@ -1090,7 +1161,7 @@ const App = () => {
       <CartContext.Provider value={cartContextValue}>
         <BrowserRouter>
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            
+
             {/* Header/Navbar */}
             <nav className="navbar">
               <div className="nav-container">
@@ -1098,7 +1169,7 @@ const App = () => {
                   <img src="/image2.jpeg" alt="Velaan Farm Logo" className="nav-logo-img" />
                   <span className="nav-brand-text">வேளாண் பண்ணை</span>
                 </Link>
-                
+
                 <ul className={`nav-links ${menuActive ? 'active' : ''}`}>
                   <li><Link to="/" onClick={closeMenu}>முகப்பு (Home)</Link></li>
                   <li><Link to="/about" onClick={closeMenu}>பற்றி (About)</Link></li>
@@ -1106,7 +1177,7 @@ const App = () => {
                   <li><Link to="/delivery" onClick={closeMenu}>விநியோகம் (Delivery)</Link></li>
                   <li><Link to="/contact" onClick={closeMenu}>தொடர்புக்கு (Contact)</Link></li>
                   <li><Link to="/admin" onClick={closeMenu}>நிர்வாகம் (Admin)</Link></li>
-                  
+
                   {cart.length > 0 && (
                     <li>
                       <Link to="/cart" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center' }}>
@@ -1115,15 +1186,15 @@ const App = () => {
                       </Link>
                     </li>
                   )}
-                  
+
                   {auth.user ? (
                     <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--primary-color)' }}>
                         👤 {auth.user.name}
                       </span>
-                      <button 
-                        onClick={() => { authDispatch({ type: 'LOGOUT' }); closeMenu(); }} 
-                        className="btn btn-secondary" 
+                      <button
+                        onClick={() => { authDispatch({ type: 'LOGOUT' }); closeMenu(); }}
+                        className="btn btn-secondary"
                         style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                       >
                         Logout
@@ -1138,12 +1209,12 @@ const App = () => {
                   )}
                 </ul>
 
-                <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="nav-cta-btn">
-                  <i className="fab fa-whatsapp"></i> வாட்ஸ்அப் ஆர்டர்
+                <a href="https://wa.me/message/4HI3RHBC6YMDB1" target="_blank" rel="noopener noreferrer" className="nav-cta-btn" title="வாட்ஸ்அப் மூலம் ஆர்டர் செய்ய">
+                  <i className="fab fa-whatsapp"></i>
                 </a>
 
-                <div 
-                  className={`menu-toggle ${menuActive ? 'is-active' : ''}`} 
+                <div
+                  className={`menu-toggle ${menuActive ? 'is-active' : ''}`}
                   id="mobile-menu"
                   onClick={() => setMenuActive(!menuActive)}
                 >
@@ -1183,7 +1254,7 @@ const App = () => {
                   <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>தொலைபேசி: +91 70927 82855</p>
                 </div>
                 <div className="footer-copyright">
-                  <p>© 2026 Velaan Farm. All Rights Reserved. Built with React.js for Mobile & Computer systems.</p>
+                  <p>© 2026 Orbis Freelancing. All Rights Reserved. Orbis Freelancing specializes in AI Development, Full-Stack Web Solutions, UI/UX Design, Automation, Branding, and Digital Growth Services. Crafted with cutting-edge technologies for exceptional user experiences across all platforms.</p>
                 </div>
               </div>
             </footer>
