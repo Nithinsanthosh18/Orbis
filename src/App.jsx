@@ -36,15 +36,20 @@ const cartReducer = (state, action) => {
   }
 };
 
-const initialAuth = { user: JSON.parse(localStorage.getItem('velaan_user')) || null };
+const initialAuth = { 
+  user: JSON.parse(localStorage.getItem('velaan_user')) || null,
+  token: localStorage.getItem('velaan_token') || null
+};
 const authReducer = (state, action) => {
   if (action.type === 'LOGIN') {
-    localStorage.setItem('velaan_user', JSON.stringify(action.payload));
-    return { user: action.payload };
+    localStorage.setItem('velaan_user', JSON.stringify(action.payload.user));
+    localStorage.setItem('velaan_token', action.payload.token);
+    return { user: action.payload.user, token: action.payload.token };
   }
   if (action.type === 'LOGOUT') {
     localStorage.removeItem('velaan_user');
-    return { user: null };
+    localStorage.removeItem('velaan_token');
+    return { user: null, token: null };
   }
   return state;
 };
@@ -94,14 +99,29 @@ const Home = () => {
     }
     setSubmitState({ loading: true, success: false, error: false });
 
-    // Simulate API submission
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'சமர்ப்பிப்பதில் பிழை!');
+        setSubmitState({ loading: false, success: false, error: true });
+        return;
+      }
+
       setSubmitState({ loading: false, success: true, error: false });
       setForm({ name: '', phone: '', message: '' });
       setTimeout(() => {
         setSubmitState(prev => ({ ...prev, success: false }));
       }, 5000);
-    }, 1500);
+    } catch (err) {
+      console.error('Contact submit error:', err);
+      alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+      setSubmitState({ loading: false, success: false, error: true });
+    }
   };
 
   return (
@@ -376,15 +396,30 @@ const Products = () => {
   const { dispatch } = useContext(CartContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('all');
+  const [productsList, setProductsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProductsList(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching products:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter(p => {
+    return productsList.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = category === 'all' || p.category === category;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, category]);
+  }, [searchTerm, category, productsList]);
 
   return (
     <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
@@ -436,7 +471,9 @@ const Products = () => {
 
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 0' }}>
-            <p style={{ fontSize: '1.2rem', color: 'var(--text-light)' }}>தயாரிப்புகள் எதுவும் கிடைக்கவில்லை.</p>
+            <p style={{ fontSize: '1.2rem', color: 'var(--text-light)' }}>
+              {loading ? 'ஏற்றப்படுகிறது (Loading)...' : 'தயாரிப்புகள் எதுவும் கிடைக்கவில்லை.'}
+            </p>
           </div>
         ) : (
           <div className="products-grid">
@@ -622,30 +659,42 @@ const Order = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // Build order object
-    const newOrder = {
-      id: Date.now(),
+    const orderData = {
       customer: form.name,
       phone: form.phone,
-      address: `${form.address}, ${form.city}, ${form.district} - ${form.pincode}`,
+      email: form.email,
+      address: `${form.address}, ${form.city}, ${form.district} - ${form.pincode}${form.notes ? ` (Notes: ${form.notes})` : ''}`,
       products: cart.map(item => `${item.name} (${item.variant}) x ${item.qty}`).join(', '),
-      total: total,
-      date: new Date().toLocaleDateString('ta-IN'),
-      status: 'விநியோகத்தில் (Pending)'
+      total: total
     };
 
-    // Save to localStorage
-    const existingOrders = JSON.parse(localStorage.getItem('velaan_orders')) || [];
-    localStorage.setItem('velaan_orders', JSON.stringify([newOrder, ...existingOrders]));
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'ஆர்டர் சமர்ப்பிப்பதில் பிழை!');
+        return;
+      }
 
-    // Clear cart and redirect
-    cartDispatch({ type: 'CLEAR' });
-    alert('✅ ஆர்டர் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது! எங்களது வாராந்திர விநியோகம் வெள்ளிக்கிழமை நடைபெறும். நன்றி!');
-    navigate('/');
+      // Clear cart and redirect
+      cartDispatch({ type: 'CLEAR' });
+      alert('✅ ஆர்டர் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது! எங்களது வாராந்திர விநியோகம் வெள்ளிக்கிழமை நடைபெறும். நன்றி!');
+      navigate('/');
+    } catch (err) {
+      console.error('Submit order error:', err);
+      alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+    }
   };
 
   return (
@@ -792,7 +841,7 @@ const Contact = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.phone) {
       alert('பெயர் மற்றும் தொலைபேசி எண்ணை உள்ளிடவும்.');
@@ -800,11 +849,27 @@ const Contact = () => {
     }
     setSubmitState({ loading: true, success: false });
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'சமர்ப்பிப்பதில் பிழை!');
+        setSubmitState({ loading: false, success: false });
+        return;
+      }
+
       setSubmitState({ loading: false, success: true });
       setForm({ name: '', phone: '', message: '' });
       setTimeout(() => setSubmitState({ loading: false, success: false }), 5000);
-    }, 1500);
+    } catch (err) {
+      console.error('Contact submit error:', err);
+      alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+      setSubmitState({ loading: false, success: false });
+    }
   };
 
   return (
@@ -881,32 +946,72 @@ const Contact = () => {
 
 // 8. ADMIN DASHBOARD
 const Admin = () => {
+  const { state: auth } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('velaan_orders')) || [
-      { id: 1, customer: 'கார்த்திக்', phone: '9876543210', address: '12, காந்தி தெரு, கொமரபாளையம்', products: 'Pure Cow Ghee (நெய்) (500g) x 1', total: 650, date: '17/06/2026', status: 'விநியோகிக்கப்பட்டது (Delivered)' }
-    ];
-    setOrders(stored);
-  }, []);
-
-  const toggleStatus = (id) => {
-    const updated = orders.map(order => {
-      if (order.id === id) {
-        const nextStatus = order.status.includes('Pending') ? 'விநியோகிக்கப்பட்டது (Delivered)' : 'விநியோகத்தில் (Pending)';
-        return { ...order, status: nextStatus };
+    fetch('/api/orders', {
+      headers: {
+        'Authorization': `Bearer ${auth.token}`
       }
-      return order;
-    });
-    setOrders(updated);
-    localStorage.setItem('velaan_orders', JSON.stringify(updated));
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch orders');
+        return res.json();
+      })
+      .then(data => {
+        setOrders(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching orders:', err);
+        setLoading(false);
+      });
+  }, [auth.token]);
+
+  const toggleStatus = async (id, currentStatus) => {
+    const nextStatus = currentStatus.includes('Pending') ? 'விநியோகிக்கப்பட்டது (Delivered)' : 'விநியோகத்தில் (Pending)';
+    try {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`
+        },
+        body: JSON.stringify({ status: nextStatus })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'ஆர்டர் நிலையை மாற்றுவதில் பிழை!');
+        return;
+      }
+      setOrders(orders.map(o => o.id === id ? { ...o, status: nextStatus } : o));
+    } catch (err) {
+      console.error('Update order status error:', err);
+      alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+    }
   };
 
-  const deleteOrder = (id) => {
+  const deleteOrder = async (id) => {
     if (window.confirm('இந்த ஆர்டரை நீக்கலாமா?')) {
-      const updated = orders.filter(o => o.id !== id);
-      setOrders(updated);
-      localStorage.setItem('velaan_orders', JSON.stringify(updated));
+      try {
+        const response = await fetch(`/api/orders/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${auth.token}`
+          }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          alert(data.error || 'ஆர்டரை நீக்குவதில் பிழை!');
+          return;
+        }
+        setOrders(orders.filter(o => o.id !== id));
+      } catch (err) {
+        console.error('Delete order error:', err);
+        alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+      }
     }
   };
 
@@ -973,7 +1078,7 @@ const Admin = () => {
                     <td>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => toggleStatus(o.id)}
+                          onClick={() => toggleStatus(o.id, o.status)}
                           className="btn btn-secondary"
                           style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '4px' }}
                         >
@@ -1009,25 +1114,41 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (email && pass) {
-      setShowSplash(true);
-
-      let currentProgress = 0;
-      const interval = setInterval(() => {
-        currentProgress += 20;
-        setProgress(currentProgress);
-        if (currentProgress >= 100) {
-          clearInterval(interval);
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pass })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          alert(data.error || 'மின்னஞ்சல் அல்லது கடவுச்சொல் தவறானது!');
+          return;
         }
-      }, 1000);
 
-      setTimeout(() => {
-        dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
-        const from = location.state?.from?.pathname || '/';
-        navigate(from, { replace: true });
-      }, 5000);
+        setShowSplash(true);
+
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+          currentProgress += 20;
+          setProgress(currentProgress);
+          if (currentProgress >= 100) {
+            clearInterval(interval);
+          }
+        }, 1000);
+
+        setTimeout(() => {
+          dispatch({ type: 'LOGIN', payload: { user: data.user, token: data.token } });
+          const from = location.state?.from?.pathname || '/';
+          navigate(from, { replace: true });
+        }, 5000);
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+      }
     } else {
       alert('மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.');
     }
@@ -1077,24 +1198,40 @@ const Signup = () => {
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (email && pass) {
-      setShowSplash(true);
-
-      let currentProgress = 0;
-      const interval = setInterval(() => {
-        currentProgress += 20;
-        setProgress(currentProgress);
-        if (currentProgress >= 100) {
-          clearInterval(interval);
+      try {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: email.split('@')[0], email, password: pass })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          alert(data.error || 'கணக்கு உருவாக்குவதில் பிழை!');
+          return;
         }
-      }, 1000);
 
-      setTimeout(() => {
-        dispatch({ type: 'LOGIN', payload: { email, name: email.split('@')[0] } });
-        navigate('/');
-      }, 5000);
+        setShowSplash(true);
+
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+          currentProgress += 20;
+          setProgress(currentProgress);
+          if (currentProgress >= 100) {
+            clearInterval(interval);
+          }
+        }, 1000);
+
+        setTimeout(() => {
+          dispatch({ type: 'LOGIN', payload: { user: data.user, token: data.token } });
+          navigate('/');
+        }, 5000);
+      } catch (err) {
+        console.error('Signup error:', err);
+        alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
+      }
     } else {
       alert('விவரங்களை முழுமையாக உள்ளிடவும்.');
     }
