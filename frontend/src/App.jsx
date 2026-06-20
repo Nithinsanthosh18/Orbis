@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useContext, createContext, useReducer, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useParams, Navigate, useLocation } from 'react-router-dom';
 
+// ---------- IMAGE PATHS WITH BASE URL ----------
+const LOGO_URL = `${import.meta.env.BASE_URL || '/shop/'}image2.jpeg`;
+const FOUNDER_URL = `${import.meta.env.BASE_URL || '/shop/'}image1.jpeg`;
+
 // ---------- CONTEXTS ----------
 const CartContext = createContext();
 const AuthContext = createContext();
@@ -163,7 +167,7 @@ const Home = () => {
 
           <div className="hero-image-container">
             <div className="hero-image-wrapper" onMouseMove={handleLogoMouseMove} onMouseLeave={handleLogoMouseLeave} style={{ cursor: 'pointer' }}>
-              <img src="/image2.jpeg" alt="Velaan Farm Logo" className="hero-logo-img" />
+              <img src={LOGO_URL} alt="Velaan Farm Logo" className="hero-logo-img" />
             </div>
             <div className={`floating-card c1 ${activeCard === 'c1' ? 'active' : ''}`}>
               <span className="card-icon">🥛</span>
@@ -189,7 +193,7 @@ const Home = () => {
           <div className="about-image">
             <div className="founder-card">
               <div className="founder-frame">
-                <img src="/image1.jpeg" alt="Founder Arumugam" className="founder-img" />
+                <img src={FOUNDER_URL} alt="Founder Arumugam" className="founder-img" />
               </div>
               <div className="founder-info">
                 <h4>ஆறுமுகம் பால்காரர்</h4>
@@ -944,165 +948,6 @@ const Contact = () => {
   );
 };
 
-// 8. ADMIN DASHBOARD
-const Admin = () => {
-  const { state: auth } = useContext(AuthContext);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/orders', {
-      headers: {
-        'Authorization': `Bearer ${auth.token}`
-      }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch orders');
-        return res.json();
-      })
-      .then(data => {
-        setOrders(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching orders:', err);
-        setLoading(false);
-      });
-  }, [auth.token]);
-
-  const toggleStatus = async (id, currentStatus) => {
-    const nextStatus = currentStatus.includes('Pending') ? 'விநியோகிக்கப்பட்டது (Delivered)' : 'விநியோகத்தில் (Pending)';
-    try {
-      const response = await fetch(`/api/orders/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth.token}`
-        },
-        body: JSON.stringify({ status: nextStatus })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.error || 'ஆர்டர் நிலையை மாற்றுவதில் பிழை!');
-        return;
-      }
-      setOrders(orders.map(o => o.id === id ? { ...o, status: nextStatus } : o));
-    } catch (err) {
-      console.error('Update order status error:', err);
-      alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
-    }
-  };
-
-  const deleteOrder = async (id) => {
-    if (window.confirm('இந்த ஆர்டரை நீக்கலாமா?')) {
-      try {
-        const response = await fetch(`/api/orders/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${auth.token}`
-          }
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          alert(data.error || 'ஆர்டரை நீக்குவதில் பிழை!');
-          return;
-        }
-        setOrders(orders.filter(o => o.id !== id));
-      } catch (err) {
-        console.error('Delete order error:', err);
-        alert('சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை.');
-      }
-    }
-  };
-
-  const totalSales = orders.reduce((sum, o) => sum + (o.status.includes('Delivered') ? o.total : 0), 0);
-
-  return (
-    <section style={{ paddingTop: '140px', minHeight: '85vh' }}>
-      <div style={{ maxWidth: '1700px', margin: '0 auto', padding: '0 4%' }}>
-        <span className="section-subtitle">நிர்வாகம்</span>
-        <h2 style={{ fontSize: '2.5rem', color: 'var(--primary-dark)', marginBottom: '30px' }}>ஆர்டர் கண்காணிப்பு (Admin Dashboard)</h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-          <div className="benefit-card" style={{ padding: '20px' }}>
-            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>மொத்த ஆர்டர்கள் (Total Orders)</p>
-            <h3 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '5px' }}>{orders.length}</h3>
-          </div>
-          <div className="benefit-card" style={{ padding: '20px' }}>
-            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>விநியோகிக்கப்பட்டவை (Delivered)</p>
-            <h3 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '5px' }}>{orders.filter(o => o.status.includes('Delivered')).length}</h3>
-          </div>
-          <div className="benefit-card" style={{ padding: '20px' }}>
-            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>விநியோகம் செய்ய வேண்டியவை (Pending)</p>
-            <h3 style={{ fontSize: '2rem', color: '#856404', marginTop: '5px' }}>{orders.filter(o => o.status.includes('Pending')).length}</h3>
-          </div>
-          <div className="benefit-card" style={{ padding: '20px' }}>
-            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem' }}>மொத்த விற்பனை (Delivered Revenue)</p>
-            <h3 style={{ fontSize: '2rem', color: 'var(--primary-color)', marginTop: '5px' }}>₹{totalSales}</h3>
-          </div>
-        </div>
-
-        <div className="admin-card" style={{ overflowX: 'auto' }}>
-          <h3>வாடிக்கையாளர் ஆர்டர் பட்டியல் (Orders List)</h3>
-          {orders.length === 0 ? (
-            <p style={{ textAlign: 'center', margin: '30px 0', color: 'var(--text-light)' }}>ஆர்டர்கள் எதுவும் இன்னும் சமர்ப்பிக்கப்படவில்லை.</p>
-          ) : (
-            <table className="order-table">
-              <thead>
-                <tr>
-                  <th>வாடிக்கையாளர்</th>
-                  <th>தயாரிப்புகள்</th>
-                  <th>முகவரி</th>
-                  <th>மொத்தம்</th>
-                  <th>தேதி</th>
-                  <th>நிலை (Status)</th>
-                  <th>செயல் (Actions)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map(o => (
-                  <tr key={o.id}>
-                    <td>
-                      <strong>{o.customer}</strong>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>{o.phone}</div>
-                    </td>
-                    <td style={{ fontSize: '0.9rem' }}>{o.products}</td>
-                    <td style={{ fontSize: '0.85rem', maxWidth: '200px' }}>{o.address}</td>
-                    <td style={{ fontWeight: '600' }}>₹{o.total}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{o.date}</td>
-                    <td>
-                      <span className={`status-badge ${o.status.includes('Delivered') ? 'delivered' : 'pending'}`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => toggleStatus(o.id, o.status)}
-                          className="btn btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '4px' }}
-                        >
-                          மாற்று (Toggle)
-                        </button>
-                        <button
-                          onClick={() => deleteOrder(o.id)}
-                          className="remove-btn"
-                          style={{ padding: '4px' }}
-                        >
-                          <i className="fas fa-trash-alt"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 // 9. AUTHENTICATION (LOGIN / SIGNUP)
 const Login = () => {
@@ -1159,9 +1004,9 @@ const Login = () => {
       {showSplash && (
         <div className="water-loader-container">
           <div className="water-logo-wrapper">
-            <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-logo-img" />
+            <img src={LOGO_URL} alt="Velaan Farm Logo" className="water-logo-img" />
             <div className="water-fill" style={{ height: `${progress}%` }}>
-              <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-fill-logo-img" />
+              <img src={LOGO_URL} alt="Velaan Farm Logo" className="water-fill-logo-img" />
             </div>
           </div>
         </div>
@@ -1242,9 +1087,9 @@ const Signup = () => {
       {showSplash && (
         <div className="water-loader-container">
           <div className="water-logo-wrapper">
-            <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-logo-img" />
+            <img src={LOGO_URL} alt="Velaan Farm Logo" className="water-logo-img" />
             <div className="water-fill" style={{ height: `${progress}%` }}>
-              <img src="/image2.jpeg" alt="Velaan Farm Logo" className="water-fill-logo-img" />
+              <img src={LOGO_URL} alt="Velaan Farm Logo" className="water-fill-logo-img" />
             </div>
           </div>
         </div>
@@ -1296,14 +1141,14 @@ const App = () => {
   return (
     <AuthContext.Provider value={authContextValue}>
       <CartContext.Provider value={cartContextValue}>
-        <BrowserRouter>
+        <BrowserRouter basename="/shop">
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
             {/* Header/Navbar */}
             <nav className="navbar">
               <div className="nav-container">
                 <Link to="/" onClick={closeMenu} className="nav-logo">
-                  <img src="/image2.jpeg" alt="Velaan Farm Logo" className="nav-logo-img" />
+                  <img src={LOGO_URL} alt="Velaan Farm Logo" className="nav-logo-img" />
                   <span className="nav-brand-text">வேளாண் பண்ணை</span>
                 </Link>
 
@@ -1313,7 +1158,7 @@ const App = () => {
                   <li><Link to="/products" onClick={closeMenu}>தயாரிப்புகள் (Products)</Link></li>
                   <li><Link to="/delivery" onClick={closeMenu}>விநியோகம் (Delivery)</Link></li>
                   <li><Link to="/contact" onClick={closeMenu}>தொடர்புக்கு (Contact)</Link></li>
-                  <li><Link to="/admin" onClick={closeMenu}>நிர்வாகம் (Admin)</Link></li>
+
 
                   {cart.length > 0 && (
                     <li>
@@ -1372,7 +1217,7 @@ const App = () => {
                 <Route path="/order" element={<Protected><Order /></Protected>} />
                 <Route path="/delivery" element={<DeliveryInfo />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/admin" element={<Protected><Admin /></Protected>} />
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 {/* Fallback to Home */}
@@ -1384,7 +1229,7 @@ const App = () => {
             <footer>
               <div className="footer-container">
                 <div className="footer-brand">
-                  <img src="/image2.jpeg" alt="Velaan Farm Logo" className="footer-logo" />
+                  <img src={LOGO_URL} alt="Velaan Farm Logo" className="footer-logo" />
                   <h3>வேளாண் பண்ணை</h3>
                   <p>100% தூய்மையான பண்ணை பசுவின் பால் மற்றும் நெய்</p>
                   <p style={{ fontSize: '0.9rem', marginTop: '5px', opacity: 0.7 }}>5f11/1 manimegalai street, kumarapalayam, nammakal - 638183</p>

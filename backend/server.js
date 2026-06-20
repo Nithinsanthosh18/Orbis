@@ -360,12 +360,20 @@ app.get('/api/contact', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 // ---------- SERVE STATIC FILES (PRODUCTION) ----------
-const distPath = path.join(__dirname, 'dist');
-app.use(express.static(distPath));
 
-// Fallback to React app router (SPA support)
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+// 1. Serve Portal Gateway at /
+app.use('/', express.static(path.join(__dirname, '../portal')));
+
+// 2. Serve Customer Shop React App at /shop
+app.use('/shop', express.static(path.join(__dirname, '../frontend/dist')));
+app.get('/shop/*splat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
+// 3. Serve Admin Dashboard React App at /admin
+app.use('/admin', express.static(path.join(__dirname, '../admin/dist')));
+app.get('/admin/*splat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../admin/dist/index.html'));
 });
 
 // Start Server
