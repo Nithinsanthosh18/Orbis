@@ -113,15 +113,15 @@ async function initializeDatabase() {
     if (!admin) {
       await dbRun(
         "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-        ['orbis', 'orbis', hashedPass, 'admin']
+        ['orbis', 'orbis.hitech@gmail.com', hashedPass, 'admin']
       );
-      console.log('Seeded admin user: orbis / orbis03');
+      console.log('Seeded admin user: orbis / orbis.hitech@gmail.com / orbis03');
     } else {
       await dbRun(
         "UPDATE users SET name = ?, email = ?, password = ? WHERE role = 'admin'",
-        ['orbis', 'orbis', hashedPass]
+        ['orbis', 'orbis.hitech@gmail.com', hashedPass]
       );
-      console.log('Updated existing admin user credentials to: orbis / orbis03');
+      console.log('Updated existing admin user credentials to: orbis / orbis.hitech@gmail.com / orbis03');
     }
 
     // Seed Products if table is empty
